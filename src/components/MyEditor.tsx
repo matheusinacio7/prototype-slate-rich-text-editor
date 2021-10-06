@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import type { MouseEvent } from 'react';
 
 import { createEditor, Descendant, Editor, Text, Transforms } from 'slate';
 
@@ -106,12 +107,32 @@ function MyEditor() {
     return <Leaf {...props} />
   }, []);
 
+  const handleToolbarClick = (
+    command: 'strong' | 'code',
+    event: MouseEvent<HTMLButtonElement>,
+  ) => {
+    event.preventDefault();
+
+    const executeCommandByType = {
+      strong: () => CustomEditor.toggleStrongMark(editor),
+      code: () => CustomEditor.toggleCodeBlock(editor),
+    }
+
+    executeCommandByType[command]();
+  }
+
   return(
     <Slate
       editor={ editor }
       value={ value }
       onChange={ (newValue) => setValue(newValue) }
     >
+      <header>
+        <menu>
+          <li><button type="button" onMouseDown={ (e) => handleToolbarClick('strong', e) }>Bold</button></li>
+          <li><button type="button" onMouseDown={ (e) => handleToolbarClick('code', e) }>Code</button></li>
+        </menu>
+      </header>
       <Editable
         onKeyDown={ (e) => {
           if (!e.ctrlKey) return;
