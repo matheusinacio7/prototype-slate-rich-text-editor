@@ -43,6 +43,48 @@ const Leaf = ({ leaf, attributes, children }: RenderLeafProps) => {
 
 const DefaultElement = ({ children, attributes }) => <p {...attributes}>{ children }</p>;
 
+const CustomEditor = {
+  isStrongMarkActive(editor: Editor) {
+    const [match] = Editor.nodes(editor, {
+      match: (n: CustomElement) => n.type === 'strong',
+      universal: true,
+    });
+
+    return !!match;
+  },
+
+  isCodeBlockActive(editor: Editor) {
+    const [match] = Editor.nodes(editor, {
+      match: (n: CustomElement) => n.type === 'code',
+    });
+
+    return !!match;
+  },
+
+  toggleStrongMark(editor: Editor) {
+    const isActive = CustomEditor.isStrongMarkActive(editor);
+
+    Transforms.setNodes(
+      editor,
+      { type: isActive ? null : 'strong' },
+      {
+        match: (n) => Text.isText(n),
+        split: true,
+      },
+    );
+  },
+
+  toggleCodeBlock(editor: Editor) {
+    const isActive = CustomEditor.isCodeBlockActive(editor);
+
+    Transforms.setNodes(
+      editor,
+      { type: isActive ? 'paragraph' : 'code' },
+      { match: (n) => Editor.isBlock(editor, n) }
+    )
+  }
+}
+
 function MyEditor() {
   const editor = useMemo(() => withReact(createEditor()), []);
   const [value, setValue] = useState<Descendant[]>([
@@ -77,24 +119,11 @@ function MyEditor() {
 
           const handlers = {
             '`': () => {
-              const [match] = Editor.nodes(editor, { match: (n: CustomElement) => n.type ==='code' })
-
-              Transforms.setNodes(
-                editor,
-                { type: match ? 'paragraph' : 'code' },
-                { match: (n) => Editor.isBlock(editor, n) },
-              );
+              CustomEditor.toggleCodeBlock(editor);
             },
 
             'b': () => {
-              Transforms.setNodes(
-                editor,
-                { type: 'strong' },
-                {
-                  match: (n) => Text.isText(n),
-                  split: true
-                },
-              )
+              CustomEditor.toggleStrongMark(editor);
             }
           }
 
